@@ -1,0 +1,21 @@
+services:
+  crm-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexcrm-app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/crm.db
+      - JWT_SECRET=production-grade-super-secret-key-change-me-2025
+      - CORS_ORIGIN=*
+    volumes:
+      - crm-data:/app/data
+
+volumes:
+  crm-data:
+    driver: local

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: nexcrm-operations
+    env: node
+    plan: free
+    buildCommand: "npm --prefix client install && npm --prefix client run build && npm --prefix server install && npm --prefix server run prisma:generate && npm --prefix server run prisma:push && npm --prefix server run seed && npm --prefix server run build"
+    startCommand: "npm --prefix server run start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: "file:./dev.db"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*"

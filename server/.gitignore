@@ -1,0 +1,16 @@
+node_modules
+node_modules/
+**/node_modules
+**/node_modules/
+**/node_modules/**
+
+dist
+dist/
+dev.db
+dev.db-journal
+*.db
+*.db-journal
+.env
+.env.*
+!.env.example
+*.log

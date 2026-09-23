@@ -1,0 +1,161 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         String    @default("EXECUTIVE") // ADMIN, MANAGER, EXECUTIVE
+  branch       String    @default("Mumbai")
+  department   String    @default("Sales")
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedCustomers Customer[]
+  assignedLeads     Lead[]
+  assignedOrders    Order[]
+  createdPayments   Payment[]
+  assignedTasks     Task[]     @relation("TaskAssignedTo")
+  createdTasks      Task[]     @relation("TaskCreatedBy")
+  auditLogs         AuditLog[]
+
+  @@index([email])
+  @@index([role, isActive])
+  @@index([branch])
+}
+
+model Customer {
+  id           String    @id @default(uuid())
+  code         String    @unique // e.g. CUST-1001
+  name         String
+  email        String
+  phone        String?
+  company      String?
+  status       String    @default("ACTIVE") // ACTIVE, INACTIVE, LEAD, ARCHIVED
+  assignedToId String?
+  branch       String    @default("Mumbai")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
+  orders       Order[]
+  leads        Lead[]
+
+  @@index([code])
+  @@index([email])
+  @@index([status, createdAt])
+  @@index([assignedToId, status])
+  @@index([branch, createdAt])
+}
+
+model Lead {
+  id           String    @id @default(uuid())
+  title        String
+  contactName  String
+  email        String
+  phone        String?
+  value        Float     @default(0)
+  status       String    @default("NEW") // NEW, CONTACTED, QUALIFIED, PROPOSAL, WON, LOST
+  followUpDate DateTime?
+  assignedToId String?
+  customerId   String?
+  branch       String    @default("Mumbai")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
+  customer     Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([status, followUpDate])
+  @@index([assignedToId, status])
+  @@index([branch, status])
+}
+
+model Order {
+  id            String    @id @default(uuid())
+  orderNumber   String    @unique // e.g. ORD-1001
+  customerId    String
+  employeeId    String
+  amount        Float
+  status        String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
+  paymentStatus String    @default("UNPAID")  // UNPAID, PARTIAL, PAID
+  version       Int       @default(1)          // Optimistic Concurrency Control (OCC)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  employee      User      @relation(fields: [employeeId], references: [id])
+  payments      Payment[]
+
+  @@index([orderNumber])
+  @@index([customerId, createdAt])
+  @@index([employeeId, status])
+  @@index([status, paymentStatus])
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  paymentNumber  String   @unique // e.g. PAY-1001
+  orderId        String
+  amount         Float
+  paymentMethod  String   @default("BANK_TRANSFER") // CARD, BANK_TRANSFER, UPI, CASH
+  transactionRef String?
+  notes          String?
+  createdById    String
+  createdAt      DateTime @default(now())
+
+  order          Order    @relation(fields: [orderId], references: [id])
+  createdBy      User     @relation(fields: [createdById], references: [id])
+
+  @@index([orderId, createdAt])
+  @@index([createdById])
+}
+
+model Task {
+  id           String    @id @default(uuid())
+  title        String
+  description  String?
+  priority     String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status       String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+  dueDate      DateTime?
+  assignedToId String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedTo   User?     @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  createdBy    User      @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
+  @@index([assignedToId, status])
+  @@index([status, dueDate])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  userName   String   @default("System")
+  userRole   String?
+  entityType String   // CUSTOMER, LEAD, ORDER, PAYMENT, TASK, AUTH
+  entityId   String
+  action     String   // CREATE, UPDATE, DELETE, STATUS_CHANGE, LOGIN, CONFLICT_DETECTED
+  summary    String   // Human-readable summary e.g. "Rahul updated order: ₹50,000 -> ₹55,000"
+  details    String?  // JSON string containing diff { old: ..., new: ... }
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
