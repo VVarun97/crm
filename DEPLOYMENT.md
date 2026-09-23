@@ -35,7 +35,7 @@ Render provides free hosting for web services with automatic HTTPS.
      - **Runtime**: `Node`
      - **Build Command**:
        ```bash
-       npm --prefix client install && npm --prefix client run build && npm --prefix server install && npm --prefix server run prisma:generate && npm --prefix server run prisma:push && npm --prefix server run seed && npm --prefix server run build
+       npm --prefix client install --include=dev && npm --prefix client run build && npm --prefix server install --include=dev && npm --prefix server run prisma:generate && npm --prefix server run prisma:push && npm --prefix server run seed && npm --prefix server run build
        ```
      - **Start Command**:
        ```bash
@@ -66,7 +66,7 @@ Railway offers instant deployment from GitHub:
 3. Select your repository.
 4. Set the **Build Command** to:
    ```bash
-   npm --prefix client install && npm --prefix client run build && npm --prefix server install && npm --prefix server run prisma:generate && npm --prefix server run prisma:push && npm --prefix server run seed && npm --prefix server run build
+   npm --prefix client install --include=dev && npm --prefix client run build && npm --prefix server install --include=dev && npm --prefix server run prisma:generate && npm --prefix server run prisma:push && npm --prefix server run seed && npm --prefix server run build
    ```
 5. Set the **Start Command** to:
    ```bash
